@@ -84,6 +84,12 @@ No physical demonstration video has been recorded for this release. [Demo record
 
 AI-assisted development was used. The code has automated tests, but generated code and documentation can still contain mistakes. Human review, reproducible reports and limited claims are intentional.
 
+## Support
+
+If this project is useful to you, you can [support its development on Ko-fi](https://ko-fi.com/mbappinhoo).
+
+Donations are optional. The project remains free and open source under the MIT license; donating does not purchase support, compatibility guarantees, or priority access.
+
 ## License
 
 Project source is published under the [MIT license](LICENSE). Third-party dependencies retain their own notices; see [third-party notices](THIRD_PARTY_NOTICES.md). Jellyfin, Philips Hue, Bouncy Castle and other product names belong to their respective owners. This project is unaffiliated with their vendors.
