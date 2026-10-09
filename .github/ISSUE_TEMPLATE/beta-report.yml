@@ -1,0 +1,33 @@
+name: Beta compatibility report
+description: Report an actual installation and hardware test
+labels: ["beta-testing"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include API keys, Hue credentials, private state, full session payloads or copyrighted videos. An unchecked result is not a pass."
+  - type: textarea
+    id: setup
+    attributes:
+      label: Actual setup
+      description: OS/architecture, project commit, Jellyfin/client versions, CPU/GPU, decoder, bridge model and codecs
+    validations:
+      required: true
+  - type: checkboxes
+    id: results
+    attributes:
+      label: Checks actually passed
+      options:
+        - label: Clean installation without source edits
+        - label: Physical lamp color synchronization
+        - label: Automatic start and stop/restoration
+        - label: Pause and resume
+        - label: Forward and backward seek
+        - label: Same-video playback off/on comparison
+        - label: Long-session resource and drift check
+        - label: Foreign stream left untouched
+  - type: textarea
+    id: failures
+    attributes:
+      label: Failures, untested items and sanitized diagnostics
+    validations:
+      required: true

@@ -1,0 +1,33 @@
+[Unit]
+Description=Jellyfin Hue Sync (independent read-only file analysis)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+SupplementaryGroups=@GROUPS@
+# Scalar path: no token quoting; only systemd percent specifiers are escaped.
+WorkingDirectory=@PREFIX@
+# Token list: quote each token, escape percent, and double dollars in arguments.
+ExecStart=@COMMAND@
+Environment=PYTHONDONTWRITEBYTECODE=1
+UMask=0077
+Restart=on-failure
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=120
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+# Path list: quote each path and escape percent, but preserve literal dollars.
+ReadWritePaths=@STATE@
+PrivateTmp=true
+MemoryMax=512M
+TasksMax=100
+
+[Install]
+WantedBy=multi-user.target

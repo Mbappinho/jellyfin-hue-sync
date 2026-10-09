@@ -1,0 +1,33 @@
+# Generated transport artifacts and downloaded third-party binaries
+/transport-dist/
+/transport/vendor/
+/transport/legacy-libs/
+/transport/build/
+/transport/test-results.jsonl
+*.jar
+*.class
+
+# Python/test outputs and staged installs (can contain API keys)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+/build/
+/dist/
+*.egg-info/
+
+# Private runtime state and credentials
+/state/
+/colors/
+api-key
+settings.json
+*.key
+.env
+.env.*
+!.env.example
+
+# Local editor/OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

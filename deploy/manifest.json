@@ -1,0 +1,58 @@
+{
+  "name": "jellyfin-hue-sync",
+  "installation": "Linux host plus systemd; Docker is used only for read-only extraction",
+  "installer": "scripts/install.py",
+  "application_license": "MIT",
+  "runtime": {
+    "python_minimum": "3.11",
+    "python_packages": [],
+    "java_minimum": "21",
+    "docker_daemon_required": true,
+    "ffmpeg_image": "User-supplied preloaded sha256 image ID or repository@sha256 digest",
+    "ffmpeg_path_in_image": "/usr/lib/jellyfin-ffmpeg/ffmpeg",
+    "decoder_default": "cpu",
+    "optional_decoder": "vaapi (Linux /dev/dri/renderD128; CPU fallback)",
+    "media_prefix_default": "/media"
+  },
+  "build": {
+    "jdk_minimum": "21",
+    "java_target": "21",
+    "dependencies_lock": "transport/dependencies.lock.json",
+    "third_party_license": "transport/licenses/Bouncy-Castle.txt",
+    "command": "python transport/build.py --test",
+    "verify_command": "python transport/verify_dist.py",
+    "offline_flag": "--offline",
+    "generated_distribution": "transport-dist/",
+    "node_required_for_ui_tests_only": true
+  },
+  "host_defaults": {
+    "prefix": "/opt/jellyfin-hue-sync",
+    "state": "/var/lib/jellyfin-hue-sync",
+    "credentials": "/etc/jellyfin-hue-sync/api-key",
+    "unit": "/etc/systemd/system/jellyfin-hue-sync.service",
+    "user": "jellyfin-hue-sync",
+    "bind": "127.0.0.1",
+    "port": 3187
+  },
+  "security": {
+    "private_directory_mode": "0700",
+    "credential_file_mode": "0600",
+    "docker_access": "Root-equivalent host privilege; --ack-docker-root is required",
+    "wildcard_binding": "Requires explicit repeated --allowed-host entries and a LAN-only host firewall; no Internet exposure",
+    "web_authentication": "Trusted-LAN only; Host/Origin/CSRF checks are not user authentication",
+    "java_heap_max": "128 MiB",
+    "extraction_memory_max": "512 MiB (no extra swap)",
+    "extraction_pids_max": 64,
+    "extraction_cpus_max": 1.5,
+    "extraction_network": "none",
+    "extraction_library_access": "read-only"
+  },
+  "lifecycle": {
+    "default_action": "Stage an installation tree; do not modify host users or services",
+    "apply_flag": "--apply (Linux root only)",
+    "apply_service_action": "daemon-reload only",
+    "automatic_service_start": false,
+    "automatic_jellyfin_restart": false,
+    "manual_start_after_review": "sudo systemctl enable --now jellyfin-hue-sync.service"
+  }
+}

@@ -1,0 +1,23 @@
+name: Bug report
+description: A reproducible problem in the service or interface
+body:
+  - type: markdown
+    attributes:
+      value: "Remove all credentials and private viewing metadata from logs before attaching them."
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behavior and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Versions and hardware
+      description: Include project commit, OS, Jellyfin/client, bridge and decoder mode
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized diagnostics

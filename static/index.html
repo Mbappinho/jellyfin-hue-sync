@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="hue-csrf" content="__HUE_CSRF__">
+<title>Jellyfin Hue Sync</title>
+<style nonce="__HUE_CSRF__">
+:root{color-scheme:dark;--bg:#111518;--panel:#1a2025;--line:#39434b;--text:#f2ede3;--muted:#b4bdc5;--warm:#ffc178;--cool:#94c8ef}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 'Trebuchet MS',sans-serif}main{max-width:1040px;margin:auto;padding:36px 24px}header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}h1{font:normal 40px/1.15 Georgia,serif;margin:0}h2{font-size:19px;margin:0 0 14px}.eyebrow{color:var(--warm);font-size:11px;text-transform:uppercase;letter-spacing:.18em;margin:0 0 8px}.subtitle,.help,footer{color:var(--muted)}.subtitle{margin:8px 0 0}.badge{border:1px solid var(--line);padding:8px 12px;border-radius:5px;color:var(--cool);white-space:nowrap}.grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:18px}.live{border-top:3px solid var(--cool)}.notice{padding:12px 16px;border-left:3px solid var(--warm);background:#25221d;margin-bottom:20px}.help{font-size:13px;margin:7px 0 16px}label{display:block;margin-top:14px;margin-bottom:5px;font-weight:bold}input,select,button{font:inherit;min-height:42px;border-radius:5px;border:1px solid var(--line)}input,select{width:100%;background:#11181d;color:var(--text);padding:8px 10px}input[type=range]{padding:8px 0;accent-color:var(--warm)}button{padding:9px 15px;cursor:pointer;background:#293640;color:var(--text)}button.primary{background:var(--warm);border-color:var(--warm);color:#251b10;font-weight:bold}button.danger{background:#392c2a;border-color:#806158}button:hover:not(:disabled){filter:brightness(1.15)}button:disabled{opacity:.5;cursor:not-allowed}:focus-visible{outline:3px solid var(--cool);outline-offset:3px}.row{display:flex;gap:10px;flex-wrap:wrap}.row input{flex:1;min-width:130px}.actions{margin-top:18px}.metric{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}.metric strong{font-weight:normal;color:var(--text);overflow-wrap:anywhere}#title{font:normal 27px/1.3 Georgia,serif;overflow-wrap:anywhere;margin:16px 0 8px}#position{font:24px Consolas,monospace;color:var(--warm)}#swatches{display:flex;gap:8px;flex-wrap:wrap;min-height:56px;margin:20px 0}.swatch{width:52px;height:52px;border-radius:8px;border:1px solid #79848d}#message{min-height:24px;color:var(--warm);margin:0 0 18px}output{float:right;font-weight:normal;color:var(--warm)}footer{font-size:12px;margin-top:8px}noscript{display:block;padding:20px;color:var(--warm)}@media(max-width:720px){main{padding:24px 16px}.grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}h1{font-size:34px}.panel{padding:18px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><p class="eyebrow">Jellyfin → Hue Entertainment</p><h1>Jellyfin Hue Sync</h1><p class="subtitle">Movie lighting from local media files. No TV screen capture.</p></div><span class="badge" id="phase" role="status">Connecting…</span></header>
+<div class="notice">Stop other Hue Entertainment controllers before starting. No TV capture app is required.</div>
+<p id="message" role="status" aria-live="polite"></p>
+<noscript>Enable JavaScript to control synchronization.</noscript>
+<div class="grid">
+<div>
+<section class="panel" aria-labelledby="bridge-heading">
+<h2 id="bridge-heading">01 · Hue bridge</h2>
+<p id="paired" class="help">Bridge not paired.</p>
+<form id="pair-form">
+<label for="ip">Bridge IP address</label>
+<div class="row"><input id="ip" name="ip" type="text" inputmode="decimal" maxlength="15" placeholder="192.168.1.20" required aria-describedby="pair-help"><button id="pair" type="submit">Pair</button></div>
+<p class="help" id="pair-help">Press the physical button on the bridge yourself, then click Pair. If pairing fails, try again within 30 seconds.</p>
+</form>
+</section>
+<section class="panel" aria-labelledby="settings-heading">
+<h2 id="settings-heading">02 · Settings</h2>
+<form id="settings-form">
+<label for="area_id">Entertainment area</label><select id="area_id" name="area_id"><option value="">Choose an area…</option></select>
+<label for="device_id">Jellyfin device</label><select id="device_id" name="device_id" aria-describedby="device-help"><option value="">Choose a device…</option></select>
+<p class="help" id="device-help">Duplicate names can refer to different devices. Active means a playback item is present (including paused playback); Idle means no playback item. Labels show the last 8 characters of the device ID. Play a video on the intended device and choose its Active entry. Selection uses the exact device ID, not its name; an unavailable device is never replaced automatically.</p>
+<label for="brightness">Brightness <output id="brightness-value" for="brightness">70 %</output></label><input id="brightness" name="brightness" type="range" min="0" max="1" step="0.01" value="0.7">
+<label for="smoothing">Responsiveness / Smoothing <output id="smoothing-value" for="smoothing">0.30</output></label><input id="smoothing" name="smoothing" type="range" min="0.01" max="1" step="0.01" value="0.3" aria-describedby="smoothing-help">
+<p class="help" id="smoothing-help">1 = no smoothing; 0.1 = slower. Lower values soften transitions.</p>
+<label for="offset_ms">Offset (milliseconds)</label><input id="offset_ms" name="offset_ms" type="number" min="-5000" max="5000" step="1" value="0" required aria-describedby="offset-help">
+<p class="help" id="offset-help">A positive offset delays the lights; a negative value moves them ahead of the movie.</p>
+<button id="save" class="primary" type="submit">Save settings</button>
+</form>
+</section>
+</div>
+<div>
+<section class="panel live" aria-labelledby="live-heading">
+<h2 id="live-heading">03 · Live status</h2>
+<div class="metric"><span>Synchronization</span><strong id="streaming">—</strong></div>
+<div class="metric"><span>Device</span><strong id="playback-device">—</strong></div>
+<p id="title">No playback</p><div id="position">—:—</div>
+<div id="swatches" aria-label="Colors sent to the lights"></div>
+<div class="metric"><span>Frames sent</span><strong id="frames">0</strong></div>
+<div class="metric"><span>Local analysis</span><strong id="cache">—</strong></div>
+<div class="row actions"><button id="start" type="button" class="primary" disabled>Start</button><button id="stop" type="button" class="danger">Stop / Attempt restore</button></div>
+<p class="help">Pausing playback or pressing Stop attempts to release the Entertainment area and restore prior lighting. Restoration is best-effort: bridge outages or another controller taking ownership can prevent it.</p>
+</section>
+<section class="panel" aria-labelledby="test-heading">
+<h2 id="test-heading">Check left / right</h2>
+<p class="help">Static test for 4 seconds: warm orange on the left, cool blue on the right, with no flashing. The app attempts to restore prior lighting afterward; restoration is not guaranteed.</p>
+<button id="test" type="button" disabled>Test lights · 4 s</button>
+</section>
+</div>
+</div>
+<footer>For trusted local networks only. Do not expose this interface to the Internet. Refreshes every second. Independent community project; not an official Jellyfin or Philips Hue product.</footer>
+</main>
+<script nonce="__HUE_CSRF__">
+'use strict';
+const $ = id => document.getElementById(id);
+const phases = {unpaired:'Pair the bridge', disabled:'Stopped', waiting:'Waiting for playback',
+  paused:'Playback paused · restoration is best-effort', preparing:'Analyzing media',
+  streaming:'Synchronization active', testing:'Static test in progress', error:'Error', stale:'Stale session'};
+const cachePhases = {idle:'Idle', extracting:'Analyzing', ready:'Ready', error:'Error'};
+let lastStatus = null;
+let dirty = false;
+let ipDirty = false;
+let timer = null;
+let loading = null;
+let connectionLost = false;
+let engineErrorShown = false;
+function choices(id, items, selected, placeholder) {
+  const select = $(id);
+  select.replaceChildren();
+  const empty = document.createElement('option');
+  empty.value = ''; empty.textContent = placeholder; select.append(empty);
+  for (const item of items) {
+    const option = document.createElement('option');
+    option.value = String(item.id);
+    option.textContent = String(item.name || item.id) + (item.client ? ' · ' + item.client : '');
+    if (id === 'device_id') {
+      const deviceId = String(item.id);
+      const suffix = (deviceId.length > 8 ? '…' : '') + deviceId.slice(-8);
+      option.textContent += (item.active ? ' · Active' : ' · Idle') + ' · ID ' + suffix;
+    } else {
+      option.textContent += item.occupied ? ' · Occupied' : item.active ? ' · Active' : '';
+    }
+    option.disabled = Boolean(item.occupied);
+    select.append(option);
+  }
+  if (selected && !items.some(item => String(item.id) === String(selected))) {
+    const missing = document.createElement('option');
+    missing.value = String(selected); missing.textContent = 'Unavailable · ' + selected;
+    select.append(missing);
+  }
+  select.value = selected == null ? '' : String(selected);
+}
+function formatPosition(value) {
+  if (!Number.isFinite(value)) return '—:—';
+  const seconds = Math.max(0, Math.floor(value));
+  const minutes = Math.floor(seconds / 60);
+  return String(minutes).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+}
+function outputs() {
+  $('brightness-value').textContent = Math.round(Number($('brightness').value) * 100) + ' %';
+  $('smoothing-value').textContent = Number($('smoothing').value).toFixed(2);
+}
+function renderStatus(status) {
+  lastStatus = status;
+  const config = status.config;
+  const diagnostic = status.error || status.cache.error;
+  if (diagnostic) {
+    $('message').textContent = diagnostic;
+    engineErrorShown = true;
+  } else if (engineErrorShown) {
+    $('message').textContent = '';
+    engineErrorShown = false;
+  }
+  $('phase').textContent = phases[status.phase] || 'Unknown state';
+  $('paired').textContent = status.paired ? 'Bridge paired · ' + status.bridge_ip : 'Bridge not paired. Press its physical button to pair.';
+  if (!ipDirty) $('ip').value = status.bridge_ip || '';
+  choices('area_id', status.areas, dirty ? $('area_id').value : config.area_id, 'Choose an area…');
+  choices('device_id', status.devices, dirty ? $('device_id').value : config.device_id, 'Choose a device…');
+  if (!dirty) for (const key of ['brightness', 'smoothing', 'offset_ms']) $(key).value = String(config[key]);
+  outputs();
+  $('title').textContent = status.playback.title || 'No playback';
+  $('position').textContent = formatPosition(status.playback.position);
+  $('playback-device').textContent = status.playback.device || '—';
+  $('streaming').textContent = status.streaming ? 'Hue stream active' : 'Hue stream stopped';
+  $('frames').textContent = String(status.frames_sent);
+  $('cache').textContent = status.cache.phase ? (cachePhases[status.cache.phase] || 'Unknown state') + ' · ' + (status.cache.frames || 0) + ' frames' : 'Idle';
+  $('start').disabled = !status.paired || !config.area_id || !config.device_id || config.enabled;
+  $('test').disabled = !status.paired || !config.area_id || status.phase === 'testing';
+  $('swatches').replaceChildren();
+  for (const [index, color] of (status.rgb || []).entries()) {
+    const swatch = document.createElement('span');
+    swatch.className = 'swatch';
+    const rgb = color.map(channel => Math.round(Math.max(0, Math.min(255, Number(channel)))));
+    swatch.style.backgroundColor = 'rgb(' + rgb.join(', ') + ')';
+    const name = 'Light ' + (index + 1) + ' · RGB ' + rgb.join(', ');
+    swatch.setAttribute('role', 'img'); swatch.setAttribute('aria-label', name); swatch.title = name;
+    $('swatches').append(swatch);
+  }
+}
+function refresh(force = false) {
+  if (loading) return force ? loading.then(() => refresh(true)) : loading;
+  clearTimeout(timer);
+  loading = pollStatus();
+  return loading;
+}
+async function pollStatus() {
+  try {
+    const response = await fetch('/api/status', {cache:'no-store', redirect:'error', signal:AbortSignal.timeout(5000)});
+    if (!response.ok) throw new Error('status');
+    const recovering = connectionLost;
+    connectionLost = false;
+    renderStatus(await response.json());
+    if (recovering) $('message').textContent = 'Connection restored.';
+    return true;
+  } catch (_) {
+    connectionLost = true;
+    $('phase').textContent = 'Server unreachable';
+    $('streaming').textContent = 'Stream state unknown';
+    $('swatches').replaceChildren();
+    $('start').disabled = true;
+    $('test').disabled = true;
+    $('message').textContent = 'Connection lost. Light state is unconfirmed; check the server.';
+    return false;
+  } finally {
+    loading = null;
+    timer = setTimeout(refresh, 1000);
+  }
+}
+const csrf = document.querySelector('meta[name="hue-csrf"]').content;
+let actionPending = false;
+async function action(path, body, success) {
+  if (actionPending) return false;
+  actionPending = true;
+  for (const id of ['pair', 'save', 'start', 'stop', 'test']) $(id).disabled = true;
+  $('message').textContent = 'Operation in progress…';
+  try {
+    const response = await fetch(path, {method:'POST', credentials:'same-origin', mode:'same-origin',
+      cache:'no-store', redirect:'error', signal:AbortSignal.timeout(15000),
+      headers:{'Content-Type':'application/json', 'X-Hue-CSRF':csrf}, body:JSON.stringify(body)});
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error('action');
+    if (path === '/api/settings') dirty = false;
+    if (path === '/api/pair') ipDirty = false;
+    if (await refresh(true) !== true) throw new Error('readback');
+    $('message').textContent = success;
+    return true;
+  } catch (_) {
+    $('message').textContent = 'Unable to complete the operation. Check the settings and try again. To pair, press the physical button on the bridge.';
+    return false;
+  } finally {
+    actionPending = false;
+    for (const id of ['pair', 'save', 'stop']) $(id).disabled = false;
+    if (lastStatus && !connectionLost) renderStatus(lastStatus);
+  }
+}
+$('pair-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if ($('pair-form').reportValidity()) await action('/api/pair', {ip:$('ip').value}, 'Bridge paired.');
+});
+$('settings-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!$('settings-form').reportValidity()) return;
+  const body = {area_id:$('area_id').value || null, device_id:$('device_id').value,
+    brightness:Number($('brightness').value), smoothing:Number($('smoothing').value), offset_ms:Number($('offset_ms').value)};
+  await action('/api/settings', body, 'Settings saved.');
+});
+$('ip').addEventListener('input', () => { ipDirty = true; });
+for (const id of ['area_id', 'device_id', 'brightness', 'smoothing', 'offset_ms']) {
+  const changed = () => { dirty = true; outputs(); };
+  $(id).addEventListener('input', changed);
+  $(id).addEventListener('change', changed);
+}
+$('start').addEventListener('click', () => {
+  if (dirty) { $('message').textContent = 'Save settings before starting.'; return; }
+  return action('/api/start', {}, 'Synchronization enabled.');
+});
+$('stop').addEventListener('click', () => action('/api/stop', {}, 'Stop requested. Attempting to restore prior lighting.'));
+$('test').addEventListener('click', () => action('/api/test', {}, 'Static test requested · 4 seconds. Restoration afterward is best-effort.'));
+refresh();
+</script>
+</body>
+</html>
